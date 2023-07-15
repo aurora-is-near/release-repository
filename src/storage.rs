@@ -1,6 +1,6 @@
-use near_sdk::collections::{LookupMap, Vector};
-use crate::{Release, Data, id::Id};
 use crate::id::IdStatus;
+use crate::{id::Id, Data, Release};
+use near_sdk::collections::{LookupMap, Vector};
 
 const DATA_KEY_PREFIX: &[u8] = &[0x0];
 
@@ -20,10 +20,7 @@ impl ReleaseStorage {
     pub fn insert(&mut self, id: Id, code: Data) {
         let release = Release::Ok(code);
         self.map.insert(&id, &release);
-        let id_status = IdStatus {
-            id,
-            yanked: false,
-        };
+        let id_status = IdStatus { id, yanked: false };
         self.list.push(&id_status);
     }
 
@@ -40,10 +37,7 @@ impl ReleaseStorage {
             i += 1;
         }
         if found {
-            let id_status = IdStatus {
-                id,
-                yanked: true,
-            };
+            let id_status = IdStatus { id, yanked: true };
             self.list.replace(i, &id_status);
         }
     }
@@ -55,6 +49,9 @@ impl ReleaseStorage {
 
 impl Default for ReleaseStorage {
     fn default() -> Self {
-        ReleaseStorage(LookupMap::new(DATA_KEY_PREFIX))
+        Self {
+            map: LookupMap::new(DATA_KEY_PREFIX),
+            list:
+        }
     }
 }

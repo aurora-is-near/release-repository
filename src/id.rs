@@ -1,7 +1,7 @@
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Pointer};
 use std::str::FromStr;
-use near_sdk::borsh::{BorshSerialize, BorshDeserialize};
 
 pub mod error {
     use thiserror::Error;
@@ -56,9 +56,7 @@ impl TryFrom<String> for Version {
         let parts: Vec<u32> = value
             .split_terminator('.')
             // TODO: remove unwrap
-            .map(|part| {
-                u32::from_str(part).unwrap()
-            })
+            .map(|part| u32::from_str(part).unwrap())
             .collect();
 
         // Check to ensure we have 3 parts.
@@ -159,15 +157,21 @@ mod tests {
     #[test]
     fn test_blank_version() {
         let version_str = "".to_string();
-        matches!(Version::try_from(version_str), Err(error::VersionError::UnusualVersion));
+        matches!(
+            Version::try_from(version_str),
+            Err(error::VersionError::UnusualVersion)
+        );
     }
 
     #[test]
     fn test_bad_version() {
         let version_str = "v1.0".to_string();
-        matches!(Version::try_from(version_str), Err(error::VersionError::UnusualVersion));
+        matches!(
+            Version::try_from(version_str),
+            Err(error::VersionError::UnusualVersion)
+        );
     }
-    
+
     #[test]
     fn test_id() {
         let version = "v1.2.3".to_string();

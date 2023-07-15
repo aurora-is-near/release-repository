@@ -1,16 +1,16 @@
 mod id;
 mod storage;
 
-use near_sdk::{env, near_bindgen, AccountId, require};
-use serde::{Serialize, Deserialize};
 use crate::id::{Id, Version};
+use crate::storage::ReleaseStorage;
 use blake2::{Blake2s256, Digest};
 use borsh::{BorshDeserialize, BorshSerialize};
-use crate::storage::ReleaseStorage;
+use near_sdk::{env, near_bindgen, require, AccountId};
+use serde::{Deserialize, Serialize};
 
 mod error {
-    use thiserror::Error;
     use crate::id::error::IdError;
+    use thiserror::Error;
 
     #[derive(Error, Debug)]
     pub enum Error {
@@ -55,7 +55,10 @@ impl State {
 
     /// Pushes a new release of the contract into the storage.
     pub fn push(&mut self, version: String, latest: bool, code: Vec<u8>) -> Vec<u8> {
-        require!(env::predecessor_account_id() == self.owner_id, "Owner's method");
+        require!(
+            env::predecessor_account_id() == self.owner_id,
+            "Owner's method"
+        );
 
         let mut hasher = Blake2s256::default();
         hasher.update(&code);
@@ -69,16 +72,19 @@ impl State {
     }
 
     /// Yanks a release from the storage with a provided ID.
-    pub fn pull(&self, id: String) -> Result<> {
-        let id = Id::try_from(id);
-        self.storage.remove(id).expect("ERR1_")
+    pub fn pull(&self, id: String) -> Result {
+        // let id = Id::try_from(id);
+        // self.storage.remove(id).expect("ERR1_")
         todo!()
         // return self.storage.data.clone();
     }
 
     /// Yanks a release from the storage.
     pub fn yank(&mut self) {
-        require!(env::predecessor_account_id() == self.owner_id, "Owner's method");
+        require!(
+            env::predecessor_account_id() == self.owner_id,
+            "Owner's method"
+        );
         todo!()
         // let key = self.storage.checksum.as_bytes().to_vec();
         // env::storage_remove(&key);
