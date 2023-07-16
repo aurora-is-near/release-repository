@@ -1,3 +1,6 @@
+#![deny(clippy::pedantic, clippy::nursery)]
+#![allow(clippy::module_name_repetitions)]
+
 mod id;
 mod storage;
 
@@ -6,18 +9,6 @@ use crate::storage::ReleaseStorage;
 use blake2::{Blake2s256, Digest};
 use borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::{env, near_bindgen, require, AccountId};
-use serde::{Deserialize, Serialize};
-
-mod error {
-    use crate::id::error::IdError;
-    use thiserror::Error;
-
-    #[derive(Error, Debug)]
-    pub enum Error {
-        #[error(transparent)]
-        IdError(#[from] IdError),
-    }
-}
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
@@ -41,6 +32,7 @@ pub struct State {
 
 #[near_bindgen]
 impl State {
+    #[must_use]
     #[init]
     pub fn new(owner: AccountId) -> Self {
         Self {
@@ -49,12 +41,13 @@ impl State {
         }
     }
 
+    #[must_use]
     pub fn is_owner(&self) -> bool {
         env::predecessor_account_id() == self.owner_id
     }
 
     /// Pushes a new release of the contract into the storage.
-    pub fn push(&mut self, version: String, latest: bool, code: Vec<u8>) -> Vec<u8> {
+    pub fn push(&mut self, version: String, code: Vec<u8>) -> Vec<u8> {
         require!(
             env::predecessor_account_id() == self.owner_id,
             "Owner's method"
@@ -71,16 +64,17 @@ impl State {
         checksum
     }
 
-    /// Yanks a release from the storage with a provided ID.
-    pub fn pull(&self, id: String) -> Result {
-        // let id = Id::try_from(id);
-        // self.storage.remove(id).expect("ERR1_")
-        todo!()
-        // return self.storage.data.clone();
-    }
+    // Yanks a release from the storage with a provided ID.
+    // pub fn pull(&self, id: String) -> Result {
+    //     let id = Id::try_from(id);
+    //     let data = self.storage.remove()
+    //     self.storage.remove(id).expect("ERR1_")
+    //     todo!()
+    //     return self.storage.data.clone();
+    // }
 
     /// Yanks a release from the storage.
-    pub fn yank(&mut self) {
+    pub fn yank(&self) {
         require!(
             env::predecessor_account_id() == self.owner_id,
             "Owner's method"
@@ -94,13 +88,24 @@ impl State {
         // };
     }
 
-    /// Lists all releases.
-    pub fn list(&self) -> String {
-        todo!()
-        // return self.storage.checksum.clone();
-    }
+    // Lists all releases.
+    // pub fn list(&self) -> String {
+    //     todo!()
+    //     return self.storage.checksum.clone();
+    // }
 
-    pub fn latest(&self) -> String {
-        todo!()
+    // pub fn latest(&self) -> String {
+    //     todo!()
+    // }
+}
+
+mod error {
+    use crate::id::error::IdError;
+    use thiserror::Error;
+
+    #[derive(Error, Debug)]
+    pub enum Error {
+        #[error(transparent)]
+        IdError(#[from] IdError),
     }
 }

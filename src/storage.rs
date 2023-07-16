@@ -3,15 +3,16 @@ use crate::{id::Id, Data, Release};
 use near_sdk::collections::{LookupMap, Vector};
 
 const DATA_KEY_PREFIX: &[u8] = &[0x0];
+const DATA_LIST_PREFIX: &[u8] = &[0x1];
 
-// #[derive(Debug)]
 /// Wrapper over NEAR `LookupMap` to insert, get and remove ids to data.
-pub(crate) struct ReleaseStorage {
+pub struct ReleaseStorage {
     map: LookupMap<Id, Release>,
     list: Vector<IdStatus>,
     // yanked_list: Vector<Id>,
 }
 
+#[allow(dead_code)]
 impl ReleaseStorage {
     pub fn new() -> Self {
         Self::default()
@@ -51,7 +52,7 @@ impl Default for ReleaseStorage {
     fn default() -> Self {
         Self {
             map: LookupMap::new(DATA_KEY_PREFIX),
-            list:
+            list: Vector::new(DATA_LIST_PREFIX),
         }
     }
 }
