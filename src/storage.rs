@@ -1,0 +1,60 @@
+use near_sdk::collections::{LookupMap, Vector};
+use crate::{Release, Data, id::Id};
+use crate::id::IdStatus;
+
+const DATA_KEY_PREFIX: &[u8] = &[0x0];
+
+// #[derive(Debug)]
+/// Wrapper over NEAR `LookupMap` to insert, get and remove ids to data.
+pub(crate) struct ReleaseStorage {
+    map: LookupMap<Id, Release>,
+    list: Vector<IdStatus>,
+    // yanked_list: Vector<Id>,
+}
+
+impl ReleaseStorage {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn insert(&mut self, id: Id, code: Data) {
+        let release = Release::Ok(code);
+        self.map.insert(&id, &release);
+        let id_status = IdStatus {
+            id,
+            yanked: false,
+        };
+        self.list.push(&id_status);
+    }
+
+    pub fn remove(&mut self, id: Id) {
+        self.map.remove(&id);
+
+        let mut i = 0;
+        let mut found = false;
+        for id_status in self.list.iter() {
+            if id_status.id == id {
+                found = true;
+                break;
+            }
+            i += 1;
+        }
+        if found {
+            let id_status = IdStatus {
+                id,
+                yanked: true,
+            };
+            self.list.replace(i, &id_status);
+        }
+    }
+
+    pub fn get(&self, id: &Id) -> Option<Release> {
+        self.map.get(id)
+    }
+}
+
+impl Default for ReleaseStorage {
+    fn default() -> Self {
+        ReleaseStorage(LookupMap::new(DATA_KEY_PREFIX))
+    }
+}
