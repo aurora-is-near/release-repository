@@ -1,9 +1,8 @@
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use std::convert::TryFrom;
-use std::str::FromStr;
 
 /// A checksum as bytes.
-pub type Checksum = Vec<u8>;
+pub struct Checksum(Vec<u8>);
 
 /// A version for the data included.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
@@ -23,10 +22,9 @@ impl TryFrom<String> for Version {
         // Split string value into parts, seperated by `.`
         let Some(value) = value.strip_prefix('v') else { return Err(error::VersionError::UnusualVersion) };
 
-        let parts: Vec<u32> = value
+        let parts: Vec<Result<u32, Self::Error>> = value
             .split_terminator('.')
-            // TODO: remove unwrap
-            .map(|part| u32::from_str(part).unwrap())
+            .map(|part| part.parse::<u32>())
             .collect();
 
         // Check to ensure we have 3 parts.
@@ -35,9 +33,9 @@ impl TryFrom<String> for Version {
         }
 
         Ok(Self {
-            major: parts[0],
-            minor: parts[1],
-            patch: parts[2],
+            major: parts[0]?,
+            minor: parts[1]?,
+            patch: parts[2]?,
         })
     }
 }
@@ -93,6 +91,36 @@ impl TryFrom<String> for Id {
     }
 }
 
+impl TryFrom<&str> for Id {
+    type Error = error::IdError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let parts: Vec<&str> = value.split_terminator('-').collect();
+
+        // Check to ensure only two parts exist.
+        if parts.len() != 2 {
+            return Err(error::IdError::UnusualId);
+        }
+
+        // Check to ensure that the first part starts with a 'v' for
+        // version.
+        if !parts[0].starts_with('v') {
+            return Err(error::IdError::MissingVPrefix);
+        }
+
+        // Check to ensure that the 2nd part is exactly 64 bytes long.
+        if parts[1].len() != 64 {
+            return Err(error::IdError::HashLen);
+        }
+
+        // TODO: Not happy with using `to_string` here.
+        let version = Version::try_from(parts[0].to_string())?;
+        let checksum = hex::decode(parts[1])?;
+
+        Ok(Self { version, checksum })
+    }
+}
+
 impl ToString for Id {
     fn to_string(&self) -> String {
         let version = self.version.to_string();
@@ -104,7 +132,13 @@ impl ToString for Id {
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct IdStatus {
     pub id: Id,
-    pub yanked: bool,
+    pub status: Status,
+}
+
+#[derive(BorshSerialize, BorshDeserialize)]
+pub enum Status {
+    Released,
+    Yanked,
 }
 
 pub mod error {

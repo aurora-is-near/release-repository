@@ -4,7 +4,7 @@
 mod id;
 mod storage;
 
-use crate::id::{Id, Version};
+use crate::id::{Checksum, Id, Version};
 use crate::storage::ReleaseStorage;
 use blake2::{Blake2s256, Digest};
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -15,14 +15,9 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-/// Data stored in the database.
-pub type Data = Vec<u8>;
-
+/// Release data stored in the database.
 #[derive(BorshSerialize, BorshDeserialize)]
-pub enum Release {
-    Ok(Data),
-    Yanked,
-}
+pub struct ReleaseData(Vec<u8>);
 
 #[near_bindgen]
 pub struct State {
@@ -47,10 +42,10 @@ impl State {
     }
 
     /// Pushes a new release of the contract into the storage.
-    pub fn push(&mut self, version: String, code: Vec<u8>) -> Vec<u8> {
+    pub fn push(&mut self, version: String, code: Vec<u8>, latest: bool) -> Vec<u8> {
         require!(
-            env::predecessor_account_id() == self.owner_id,
-            "Owner's method"
+            self.is_owner()
+            "Access denied: owner's method"
         );
 
         let mut hasher = Blake2s256::default();
@@ -58,9 +53,9 @@ impl State {
         let checksum: Vec<u8> = hasher.finalize().to_vec();
         let id = {
             let version = Version::try_from(version).unwrap();
-            Id::new(version, checksum.clone())
+            Id::new(version, Checksum(checksum.clone()))
         };
-        self.storage.insert(id, code);
+        self.storage.insert(id, ReleaseData(code), latest);
         checksum
     }
 

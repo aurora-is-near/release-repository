@@ -1,15 +1,22 @@
 use crate::id::IdStatus;
-use crate::{id::Id, Data, Release};
+use crate::{id, id::Id, ReleaseData};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, Vector};
+use near_sdk::store::LookupSet;
 
-const DATA_KEY_PREFIX: &[u8] = &[0x0];
-const DATA_LIST_PREFIX: &[u8] = &[0x1];
+#[derive(BorshSerialize, BorshStorageKey)]
+pub enum StorageKey {
+    BlobData = 0x1,
+    StatusList = 0x2,
+    YankedList = 0x3,
+}
 
 /// Wrapper over NEAR `LookupMap` to insert, get and remove ids to data.
 pub struct ReleaseStorage {
-    map: LookupMap<Id, Release>,
-    list: Vector<IdStatus>,
-    // yanked_list: Vector<Id>,
+    releases: LookupMap<Id, ReleaseData>,
+    status_list: Vector<IdStatus>,
+    yanked_list: Vector<Id>,
+    latest: Option<Id>,
 }
 
 #[allow(dead_code)]
@@ -18,19 +25,24 @@ impl ReleaseStorage {
         Self::default()
     }
 
-    pub fn insert(&mut self, id: Id, code: Data) {
-        let release = Release::Ok(code);
-        self.map.insert(&id, &release);
-        let id_status = IdStatus { id, yanked: false };
-        self.list.push(&id_status);
+    pub fn insert(&mut self, id: Id, code: ReleaseData, latest: bool) {
+        self.releases.insert(&id, &code);
+        let id_status = IdStatus {
+            id: id.clone(),
+            status: id::Status::Released,
+        };
+        self.status_list.push(&id_status);
+        if latest {
+            self.latest = Some(id);
+        }
     }
 
     pub fn remove(&mut self, id: Id) {
-        self.map.remove(&id);
+        self.releases.remove(&id);
 
         let mut i = 0;
         let mut found = false;
-        for id_status in self.list.iter() {
+        for id_status in self.status_list.iter() {
             if id_status.id == id {
                 found = true;
                 break;
@@ -38,21 +50,27 @@ impl ReleaseStorage {
             i += 1;
         }
         if found {
-            let id_status = IdStatus { id, yanked: true };
-            self.list.replace(i, &id_status);
+            let id_status = IdStatus {
+                id: id.clone(),
+                status: id::Status::Yanked,
+            };
+            self.status_list.replace(i, &id_status);
+            self.yanked_list.push(&id);
         }
     }
 
     pub fn get(&self, id: &Id) -> Option<Release> {
-        self.map.get(id)
+        self.releases.get(id)
     }
 }
 
 impl Default for ReleaseStorage {
     fn default() -> Self {
         Self {
-            map: LookupMap::new(DATA_KEY_PREFIX),
-            list: Vector::new(DATA_LIST_PREFIX),
+            releases: LookupMap::new(StorageKey::BlobData),
+            status_list: Vector::new(StorageKey::BlobData),
+            yanked_list: Vector::new(StorageKey::BlobData),
+            latest: None,
         }
     }
 }
