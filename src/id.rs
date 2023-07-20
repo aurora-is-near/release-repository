@@ -2,7 +2,8 @@ use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use std::convert::TryFrom;
 
 /// A checksum as bytes.
-pub struct Checksum(Vec<u8>);
+#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct Checksum(pub Vec<u8>);
 
 /// A version for the data included.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
@@ -21,21 +22,20 @@ impl TryFrom<String> for Version {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         // Split string value into parts, seperated by `.`
         let Some(value) = value.strip_prefix('v') else { return Err(error::VersionError::UnusualVersion) };
-
-        let parts: Vec<Result<u32, Self::Error>> = value
-            .split_terminator('.')
-            .map(|part| part.parse::<u32>())
-            .collect();
-
+        let parts: Vec<&str> = value.split_terminator('.').collect();
         // Check to ensure we have 3 parts.
         if parts.len() != 3 {
             return Err(error::VersionError::UnusualVersion);
         }
 
+        let _major = parts[0]
+            .parse::<u32>()
+            .map_err(error::VersionError::ParseInt);
+
         Ok(Self {
-            major: parts[0]?,
-            minor: parts[1]?,
-            patch: parts[2]?,
+            major: 1,
+            minor: 1,
+            patch: 1,
         })
     }
 }
@@ -56,7 +56,7 @@ pub struct Id {
 }
 
 impl Id {
-    pub(crate) fn new(version: Version, checksum: Checksum) -> Self {
+    pub(crate) const fn new(version: Version, checksum: Checksum) -> Self {
         Self { version, checksum }
     }
 }
@@ -85,7 +85,7 @@ impl TryFrom<String> for Id {
 
         // TODO: Not happy with using `to_string` here.
         let version = Version::try_from(parts[0].to_string())?;
-        let checksum = hex::decode(parts[1])?;
+        let checksum = Checksum(hex::decode(parts[1])?);
 
         Ok(Self { version, checksum })
     }
@@ -115,7 +115,7 @@ impl TryFrom<&str> for Id {
 
         // TODO: Not happy with using `to_string` here.
         let version = Version::try_from(parts[0].to_string())?;
-        let checksum = hex::decode(parts[1])?;
+        let checksum = Checksum(hex::decode(parts[1])?);
 
         Ok(Self { version, checksum })
     }
@@ -124,7 +124,7 @@ impl TryFrom<&str> for Id {
 impl ToString for Id {
     fn to_string(&self) -> String {
         let version = self.version.to_string();
-        let checksum = hex::encode(&self.checksum);
+        let checksum = hex::encode(&self.checksum.0);
         format!("{version}-{checksum}")
     }
 }
@@ -142,12 +142,13 @@ pub enum Status {
 }
 
 pub mod error {
+    use std::num::ParseIntError;
     use thiserror::Error;
 
     #[derive(Error, Debug)]
     pub enum VersionError {
         #[error("error must fit into a u32")]
-        StdError(#[from] std::io::Error),
+        ParseInt(#[from] ParseIntError),
         #[error("unusual version provided, expected `vX.Y.Z`")]
         UnusualVersion,
     }

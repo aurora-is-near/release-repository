@@ -1,14 +1,14 @@
 #![deny(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::module_name_repetitions)]
 
-mod id;
-mod storage;
-
 use crate::id::{Checksum, Id, Version};
 use crate::storage::ReleaseStorage;
 use blake2::{Blake2s256, Digest};
-use borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::{env, near_bindgen, require, AccountId};
+
+mod id;
+mod storage;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
@@ -43,10 +43,7 @@ impl State {
 
     /// Pushes a new release of the contract into the storage.
     pub fn push(&mut self, version: String, code: Vec<u8>, latest: bool) -> Vec<u8> {
-        require!(
-            self.is_owner()
-            "Access denied: owner's method"
-        );
+        require!(self.is_owner(), "Access denied: owner's method");
 
         let mut hasher = Blake2s256::default();
         hasher.update(&code);
@@ -55,7 +52,7 @@ impl State {
             let version = Version::try_from(version).unwrap();
             Id::new(version, Checksum(checksum.clone()))
         };
-        self.storage.insert(id, ReleaseData(code), latest);
+        self.storage.insert(id, &ReleaseData(code), latest);
         checksum
     }
 

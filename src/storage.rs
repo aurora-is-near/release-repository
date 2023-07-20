@@ -1,8 +1,8 @@
 use crate::id::IdStatus;
 use crate::{id, id::Id, ReleaseData};
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::BorshSerialize;
 use near_sdk::collections::{LookupMap, Vector};
-use near_sdk::store::LookupSet;
+use near_sdk::BorshStorageKey;
 
 #[derive(BorshSerialize, BorshStorageKey)]
 pub enum StorageKey {
@@ -25,8 +25,8 @@ impl ReleaseStorage {
         Self::default()
     }
 
-    pub fn insert(&mut self, id: Id, code: ReleaseData, latest: bool) {
-        self.releases.insert(&id, &code);
+    pub fn insert(&mut self, id: Id, code: &ReleaseData, latest: bool) {
+        self.releases.insert(&id, code);
         let id_status = IdStatus {
             id: id.clone(),
             status: id::Status::Released,
@@ -37,13 +37,13 @@ impl ReleaseStorage {
         }
     }
 
-    pub fn remove(&mut self, id: Id) {
-        self.releases.remove(&id);
+    pub fn remove(&mut self, id: &Id) {
+        self.releases.remove(id);
 
         let mut i = 0;
         let mut found = false;
         for id_status in self.status_list.iter() {
-            if id_status.id == id {
+            if id_status.id == id.clone() {
                 found = true;
                 break;
             }
@@ -55,11 +55,11 @@ impl ReleaseStorage {
                 status: id::Status::Yanked,
             };
             self.status_list.replace(i, &id_status);
-            self.yanked_list.push(&id);
+            self.yanked_list.push(id);
         }
     }
 
-    pub fn get(&self, id: &Id) -> Option<Release> {
+    pub fn get(&self, id: &Id) -> Option<ReleaseData> {
         self.releases.get(id)
     }
 }
@@ -68,8 +68,8 @@ impl Default for ReleaseStorage {
     fn default() -> Self {
         Self {
             releases: LookupMap::new(StorageKey::BlobData),
-            status_list: Vector::new(StorageKey::BlobData),
-            yanked_list: Vector::new(StorageKey::BlobData),
+            status_list: Vector::new(StorageKey::StatusList),
+            yanked_list: Vector::new(StorageKey::YankedList),
             latest: None,
         }
     }
