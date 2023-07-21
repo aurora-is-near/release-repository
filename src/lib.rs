@@ -5,6 +5,7 @@ use crate::id::{Checksum, Id, Version};
 use crate::storage::ReleaseStorage;
 use blake2::{Blake2s256, Digest};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::collections::Vector;
 use near_sdk::{env, near_bindgen, require, AccountId};
 
 mod id;
@@ -42,6 +43,7 @@ impl State {
     }
 
     /// Pushes a new release of the contract into the storage.
+    #[payable]
     pub fn push(&mut self, version: String, code: Vec<u8>, latest: bool) -> Vec<u8> {
         require!(self.is_owner(), "Access denied: owner's method");
 
@@ -56,39 +58,33 @@ impl State {
         checksum
     }
 
-    // Yanks a release from the storage with a provided ID.
-    // pub fn pull(&self, id: String) -> Result {
-    //     let id = Id::try_from(id);
-    //     let data = self.storage.remove()
-    //     self.storage.remove(id).expect("ERR1_")
-    //     todo!()
-    //     return self.storage.data.clone();
-    // }
+    /// Yanks a release from the storage with a provided ID.
+    #[payable]
+    pub fn pull(&mut self, id: String) -> Id {
+        require!(self.is_owner(), "Access denied: owner's method");
 
-    /// Yanks a release from the storage.
-    pub fn yank(&self) {
-        require!(
-            env::predecessor_account_id() == self.owner_id,
-            "Owner's method"
-        );
-        todo!()
-        // let key = self.storage.checksum.as_bytes().to_vec();
-        // env::storage_remove(&key);
-        // self.storage = ChecksumStorage {
-        //     owner: self.storage.owner.clone(),
-        //     ..Default::default()
-        // };
+        let id = Id::try_from(id).unwrap();
+        self.storage.remove(&id);
+        id
     }
 
-    // Lists all releases.
-    // pub fn list(&self) -> String {
-    //     todo!()
-    //     return self.storage.checksum.clone();
-    // }
+    /// Lists all releases.
+    #[must_use]
+    pub fn list(self) -> Vector<id::IdStatus> {
+        self.storage.list()
+    }
 
-    // pub fn latest(&self) -> String {
-    //     todo!()
-    // }
+    /// Lists all yank releases.
+    #[must_use]
+    pub fn yank_list(self) -> Vector<Id> {
+        self.storage.yanks()
+    }
+
+    /// Get latest version
+    #[must_use]
+    pub fn latest(&self) -> Option<Id> {
+        self.storage.latest()
+    }
 }
 
 mod error {

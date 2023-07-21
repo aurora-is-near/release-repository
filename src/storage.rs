@@ -62,6 +62,20 @@ impl ReleaseStorage {
     pub fn get(&self, id: &Id) -> Option<ReleaseData> {
         self.releases.get(id)
     }
+
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn list(self) -> Vector<IdStatus> {
+        self.status_list
+    }
+
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn yanks(self) -> Vector<Id> {
+        self.yanked_list
+    }
+
+    pub fn latest(&self) -> Option<Id> {
+        self.latest.clone()
+    }
 }
 
 impl Default for ReleaseStorage {
