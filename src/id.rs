@@ -29,14 +29,20 @@ impl TryFrom<String> for Version {
             return Err(error::VersionError::UnusualVersion);
         }
 
-        let _major = parts[0]
+        let major = parts[0]
+            .parse::<u32>()
+            .map_err(error::VersionError::ParseInt);
+        let minor = parts[1]
+            .parse::<u32>()
+            .map_err(error::VersionError::ParseInt);
+        let patch = parts[2]
             .parse::<u32>()
             .map_err(error::VersionError::ParseInt);
 
         Ok(Self {
-            major: 1,
-            minor: 1,
-            patch: 1,
+            major: major?,
+            minor: minor?,
+            patch: patch?,
         })
     }
 }

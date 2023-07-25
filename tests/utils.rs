@@ -32,12 +32,14 @@ impl TestContract {
             .map_err(|err| anyhow::anyhow!("Failed init sandbox: {:?}", err))?;
 
         // Explicitly read contract file
-        let contract_data = std::fs::read("../bin/contract.wasm").unwrap_or_else(|_| {
-            panic!(
+        let contract_data =
+            std::fs::read("target/wasm32-unknown-unknown/release/aurora_release_repository.wasm")
+                .unwrap_or_else(|_| {
+                    panic!(
                 "Failed read contract in path: {:?} file: bin/aurora-eth-connector-test.wasm",
                 std::env::current_dir().unwrap()
             )
-        });
+                });
 
         let contract = worker.dev_deploy(&contract_data).await?;
         Ok(contract)

@@ -12,9 +12,6 @@ mod storage;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 /// Release data stored in the database.
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct ReleaseData(Vec<u8>);
