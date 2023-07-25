@@ -1,12 +1,13 @@
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::serde::Serialize;
 use std::convert::TryFrom;
 
 /// A checksum as bytes.
-#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, BorshSerialize, BorshDeserialize)]
 pub struct Checksum(pub Vec<u8>);
 
 /// A version for the data included.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, BorshSerialize, BorshDeserialize)]
 pub struct Version {
     /// The major version.
     major: u32,
@@ -47,7 +48,7 @@ impl ToString for Version {
 }
 
 /// The Id of checksum data.
-#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, BorshSerialize, BorshDeserialize)]
 pub struct Id {
     /// The version of the data.
     version: Version,
@@ -129,13 +130,13 @@ impl ToString for Id {
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(Serialize, BorshSerialize, BorshDeserialize)]
 pub struct IdStatus {
     pub id: Id,
     pub status: Status,
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(Serialize, BorshSerialize, BorshDeserialize)]
 pub enum Status {
     Released,
     Yanked,

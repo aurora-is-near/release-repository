@@ -5,8 +5,7 @@ use crate::id::{Checksum, Id, Version};
 use crate::storage::ReleaseStorage;
 use blake2::{Blake2s256, Digest};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
-use near_sdk::collections::Vector;
-use near_sdk::{env, near_bindgen, require, AccountId};
+use near_sdk::{env, near_bindgen, require, AccountId, PanicOnDefault};
 
 mod id;
 mod storage;
@@ -21,6 +20,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub struct ReleaseData(Vec<u8>);
 
 #[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct State {
     storage: ReleaseStorage,
     owner_id: AccountId,
@@ -70,13 +70,13 @@ impl State {
 
     /// Lists all releases.
     #[must_use]
-    pub fn list(self) -> Vector<id::IdStatus> {
+    pub fn list(self) -> Vec<id::IdStatus> {
         self.storage.list()
     }
 
     /// Lists all yank releases.
     #[must_use]
-    pub fn yank_list(self) -> Vector<Id> {
+    pub fn yank_list(self) -> Vec<Id> {
         self.storage.yanks()
     }
 

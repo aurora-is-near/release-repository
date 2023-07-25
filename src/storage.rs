@@ -1,6 +1,6 @@
 use crate::id::IdStatus;
 use crate::{id, id::Id, ReleaseData};
-use near_sdk::borsh::BorshSerialize;
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, Vector};
 use near_sdk::BorshStorageKey;
 
@@ -12,6 +12,7 @@ pub enum StorageKey {
 }
 
 /// Wrapper over NEAR `LookupMap` to insert, get and remove ids to data.
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct ReleaseStorage {
     releases: LookupMap<Id, ReleaseData>,
     status_list: Vector<IdStatus>,
@@ -64,13 +65,13 @@ impl ReleaseStorage {
     }
 
     #[allow(clippy::missing_const_for_fn)]
-    pub fn list(self) -> Vector<IdStatus> {
-        self.status_list
+    pub fn list(self) -> Vec<IdStatus> {
+        self.status_list.to_vec()
     }
 
     #[allow(clippy::missing_const_for_fn)]
-    pub fn yanks(self) -> Vector<Id> {
-        self.yanked_list
+    pub fn yanks(self) -> Vec<Id> {
+        self.yanked_list.to_vec()
     }
 
     pub fn latest(&self) -> Option<Id> {
