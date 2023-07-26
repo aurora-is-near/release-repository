@@ -3,7 +3,6 @@
 
 use crate::id::{Checksum, Id, Version};
 use crate::storage::ReleaseStorage;
-use blake2::{Blake2s256, Digest};
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::{env, near_bindgen, require, AccountId, PanicOnDefault};
 
@@ -41,28 +40,25 @@ impl State {
 
     /// Pushes a new release of the contract into the storage.
     #[payable]
-    pub fn push(&mut self, version: String, code: Vec<u8>, latest: bool) -> Vec<u8> {
+    pub fn push(&mut self, version: String, code: Vec<u8>, latest: bool) -> String {
         require!(self.is_owner(), "Access denied: owner's method");
-
-        let mut hasher = Blake2s256::default();
-        hasher.update(&code);
-        let checksum: Vec<u8> = hasher.finalize().to_vec();
+        let checksum = env::sha256(&code);
         let id = {
             let version = Version::try_from(version).unwrap();
             Id::new(version, Checksum(checksum.clone()))
         };
         self.storage.insert(id, &ReleaseData(code), latest);
-        checksum
+        id.to_string()
     }
 
     /// Yanks a release from the storage with a provided ID.
     #[payable]
-    pub fn pull(&mut self, id: String) -> Id {
+    pub fn pull(&mut self, id: String) -> String {
         require!(self.is_owner(), "Access denied: owner's method");
 
         let id = Id::try_from(id).unwrap();
         self.storage.remove(&id);
-        id
+        id.to_string()
     }
 
     /// Lists all releases.

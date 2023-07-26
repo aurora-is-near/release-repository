@@ -6,6 +6,12 @@ use std::convert::TryFrom;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, BorshSerialize, BorshDeserialize)]
 pub struct Checksum(pub Vec<u8>);
 
+impl ToString for Checksum {
+    fn to_string(&self) -> String {
+        hex::encode(&self.0)
+    }
+}
+
 /// A version for the data included.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, BorshSerialize, BorshDeserialize)]
 pub struct Version {
@@ -47,9 +53,39 @@ impl TryFrom<String> for Version {
     }
 }
 
+impl TryFrom<&str> for Version {
+    type Error = error::VersionError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        // Split string value into parts, seperated by `.`
+        let Some(value) = value.strip_prefix('v') else { return Err(error::VersionError::UnusualVersion) };
+        let parts: Vec<&str> = value.split_terminator('.').collect();
+        // Check to ensure we have 3 parts.
+        if parts.len() != 3 {
+            return Err(error::VersionError::UnusualVersion);
+        }
+
+        let major = parts[0]
+            .parse::<u32>()
+            .map_err(error::VersionError::ParseInt);
+        let minor = parts[1]
+            .parse::<u32>()
+            .map_err(error::VersionError::ParseInt);
+        let patch = parts[2]
+            .parse::<u32>()
+            .map_err(error::VersionError::ParseInt);
+
+        Ok(Self {
+            major: major?,
+            minor: minor?,
+            patch: patch?,
+        })
+    }
+}
+
 impl ToString for Version {
     fn to_string(&self) -> String {
-        format!("{}.{}.{}", self.major, self.minor, self.patch)
+        format!("v{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 
@@ -72,29 +108,7 @@ impl TryFrom<String> for Id {
     type Error = error::IdError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let parts: Vec<&str> = value.split_terminator('-').collect();
-
-        // Check to ensure only two parts exist.
-        if parts.len() != 2 {
-            return Err(error::IdError::UnusualId);
-        }
-
-        // Check to ensure that the first part starts with a 'v' for
-        // version.
-        if !parts[0].starts_with('v') {
-            return Err(error::IdError::MissingVPrefix);
-        }
-
-        // Check to ensure that the 2nd part is exactly 64 bytes long.
-        if parts[1].len() != 64 {
-            return Err(error::IdError::HashLen);
-        }
-
-        // TODO: Not happy with using `to_string` here.
-        let version = Version::try_from(parts[0].to_string())?;
-        let checksum = Checksum(hex::decode(parts[1])?);
-
-        Ok(Self { version, checksum })
+        Self::try_from(&value[..])
     }
 }
 
@@ -119,9 +133,7 @@ impl TryFrom<&str> for Id {
         if parts[1].len() != 64 {
             return Err(error::IdError::HashLen);
         }
-
-        // TODO: Not happy with using `to_string` here.
-        let version = Version::try_from(parts[0].to_string())?;
+        let version = Version::try_from(parts[0])?;
         let checksum = Checksum(hex::decode(parts[1])?);
 
         Ok(Self { version, checksum })
@@ -131,7 +143,7 @@ impl TryFrom<&str> for Id {
 impl ToString for Id {
     fn to_string(&self) -> String {
         let version = self.version.to_string();
-        let checksum = hex::encode(&self.checksum.0);
+        let checksum = self.checksum.to_string();
         format!("{version}-{checksum}")
     }
 }

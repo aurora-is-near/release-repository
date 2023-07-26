@@ -30,7 +30,6 @@ codegen-units = 1
 rpath = false
 
 [dependencies]
-blake2 = "0.10.6"
 borsh = "0.9.3"
 hex = "0.4.3"
 near-sdk = "4.1"
