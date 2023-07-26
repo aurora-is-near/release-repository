@@ -1,4 +1,3 @@
-use near_sdk::serde_json::json;
 use std::str::FromStr;
 use workspaces::{AccountId, Contract};
 
@@ -17,12 +16,11 @@ impl TestContract {
 
         let res = contract
             .call("new")
-            .args_json(json!({
-                "owner": owner_id,
-            }))
+            .args_json((owner_id,))
             .max_gas()
             .transact()
             .await?;
+        println!("{res:#?}");
         assert!(res.is_success());
 
         Ok(Self { contract })
