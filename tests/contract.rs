@@ -1,20 +1,24 @@
 use crate::utils::TestContract;
+use near_sdk::ONE_YOCTO;
 
-pub mod utils;
+mod utils;
 
 #[tokio::test]
-async fn test_ft_transfer() {
-    let _contract = TestContract::new().await.unwrap();
-    /*
+async fn test_push() {
+    let contract = TestContract::new(None).await.unwrap();
+
+    let version = "v1.2.3";
+    let code: Vec<String> = vec![];
+    let latests = false;
     let res = contract
         .contract
-        .call("ft_transfer")
-        .args_json((&receiver_id, transfer_amount, "transfer memo"))
-        .gas(DEFAULT_GAS)
+        .call("push")
+        .args_json((version, code, latests))
+        .gas(10_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()
         .await
         .unwrap();
+    println!("{:#?}", res.clone());
     assert!(res.is_success());
-    */
 }

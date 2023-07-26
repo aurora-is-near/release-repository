@@ -1,17 +1,19 @@
 use near_sdk::serde_json::json;
 use std::str::FromStr;
-use workspaces::{result::ExecutionFinalResult, AccountId, Contract};
-
-const CONTRACT_OWNER: &str = "owner";
+use workspaces::{AccountId, Contract};
 
 pub struct TestContract {
     pub contract: Contract,
 }
 
 impl TestContract {
-    pub async fn new() -> anyhow::Result<TestContract> {
+    pub async fn new(owner_id: Option<&str>) -> anyhow::Result<TestContract> {
         let contract = Self::deploy_contract().await?;
-        let owner_id: AccountId = AccountId::from_str(CONTRACT_OWNER).unwrap();
+        let owner_id: AccountId = if let Some(owner_id) = owner_id {
+            AccountId::from_str(owner_id).unwrap()
+        } else {
+            contract.as_account().id().clone()
+        };
 
         let res = contract
             .call("new")
@@ -43,11 +45,5 @@ impl TestContract {
 
         let contract = worker.dev_deploy(&contract_data).await?;
         Ok(contract)
-    }
-}
-
-pub fn print_logs(res: ExecutionFinalResult) {
-    for log in res.logs().iter() {
-        println!("\t[LOG] {}", log);
     }
 }
