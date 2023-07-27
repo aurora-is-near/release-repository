@@ -93,9 +93,9 @@ impl ToString for Version {
 #[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct Id {
     /// The version of the data.
-    version: Version,
+    pub version: Version,
     /// The blake2b checksum of the data.
-    checksum: Checksum,
+    pub checksum: Checksum,
 }
 
 impl Id {

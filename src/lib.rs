@@ -80,7 +80,7 @@ impl State {
 
     /// Lists all releases.
     #[must_use]
-    pub fn list(self) -> Vec<id::IdStatus> {
+    pub fn list(self) -> Vec<IdStatus> {
         self.storage.list()
     }
 
