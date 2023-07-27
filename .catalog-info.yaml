@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: near-release-repository
+  title: NEAR Release Repository
+  description: |-
+    A NEAR contract which stores a history of contract releases. Useful for cases when a DAO needs to deploy new releases from a single source of truth.
+  tags:
+    - contract
+    - near
+  links: []
+  annotations:
+    aurora.dev/security-tier: "1"
+spec:
+  owner: engine-team
+  type: contract
+  lifecycle: production
+  system: aurora-engine
+  interactsWith: []
