@@ -99,7 +99,8 @@ pub struct Id {
 }
 
 impl Id {
-    pub(crate) const fn new(version: Version, checksum: Checksum) -> Self {
+    #[must_use]
+    pub const fn new(version: Version, checksum: Checksum) -> Self {
         Self { version, checksum }
     }
 }

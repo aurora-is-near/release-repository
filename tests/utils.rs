@@ -20,9 +20,7 @@ impl TestContract {
             .max_gas()
             .transact()
             .await?;
-        println!("{res:#?}");
         assert!(res.is_success());
-
         Ok(Self { contract })
     }
 

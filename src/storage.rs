@@ -22,6 +22,7 @@ pub struct ReleaseStorage {
 
 #[allow(dead_code)]
 impl ReleaseStorage {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -60,20 +61,24 @@ impl ReleaseStorage {
         }
     }
 
+    #[must_use]
     pub fn get(&self, id: &Id) -> Option<ReleaseData> {
         self.releases.get(id)
     }
 
     #[allow(clippy::missing_const_for_fn)]
+    #[must_use]
     pub fn list(self) -> Vec<IdStatus> {
         self.status_list.to_vec()
     }
 
     #[allow(clippy::missing_const_for_fn)]
+    #[must_use]
     pub fn yanks(self) -> Vec<Id> {
         self.yanked_list.to_vec()
     }
 
+    #[must_use]
     pub fn latest(&self) -> Option<Id> {
         self.latest.clone()
     }

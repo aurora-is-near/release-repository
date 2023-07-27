@@ -7,8 +7,8 @@ use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::Base64VecU8;
 use near_sdk::{env, near_bindgen, require, AccountId, PanicOnDefault};
 
-mod id;
-mod storage;
+pub mod id;
+pub mod storage;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
@@ -43,13 +43,12 @@ impl State {
     #[payable]
     pub fn push(&mut self, version: String, code: Base64VecU8, latest: bool) -> String {
         require!(self.is_owner(), "Access denied: owner's method");
-        env::log_str(&format!("{code:?}"));
         let code: Vec<u8> = code.into();
 
-        let checksum = env::sha256(&code);
+        let checksum = Checksum(env::sha256(&code));
         let id = {
             let version = Version::try_from(version).unwrap();
-            Id::new(version, Checksum(checksum))
+            Id::new(version, checksum)
         };
         self.storage.insert(id.clone(), &ReleaseData(code), latest);
         id.to_string()
