@@ -39,7 +39,7 @@ impl ReleaseStorage {
         }
     }
 
-    pub fn remove(&mut self, id: &Id) {
+    pub fn remove(&mut self, id: &Id) -> Option<IdStatus> {
         self.releases.remove(id);
 
         let mut i = 0;
@@ -51,14 +51,16 @@ impl ReleaseStorage {
             }
             i += 1;
         }
-        if found {
-            let id_status = IdStatus {
-                id: id.clone(),
-                status: id::Status::Yanked,
-            };
-            self.status_list.replace(i, &id_status);
-            self.yanked_list.push(id);
+        if !found {
+            return None;
         }
+        let id_status = IdStatus {
+            id: id.clone(),
+            status: id::Status::Yanked,
+        };
+        self.status_list.replace(i, &id_status);
+        self.yanked_list.push(id);
+        Some(id_status)
     }
 
     #[must_use]
@@ -81,6 +83,12 @@ impl ReleaseStorage {
     #[must_use]
     pub fn latest(&self) -> Option<Id> {
         self.latest.clone()
+    }
+
+    #[allow(clippy::needless_pass_by_value)]
+    #[must_use]
+    pub fn get_status(&self, id: Id) -> Option<IdStatus> {
+        self.status_list.iter().find(|id_status| id_status.id == id)
     }
 }
 

@@ -1,7 +1,7 @@
 #![deny(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::module_name_repetitions)]
 
-use crate::id::{Checksum, Id, Version};
+use crate::id::{Checksum, Id, IdStatus, Version};
 use crate::storage::ReleaseStorage;
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::Base64VecU8;
@@ -56,12 +56,26 @@ impl State {
 
     /// Yanks a release from the storage with a provided ID.
     #[payable]
-    pub fn pull(&mut self, id: String) -> String {
+    pub fn pull(&mut self, id: String) -> Option<IdStatus> {
         require!(self.is_owner(), "Access denied: owner's method");
 
         let id = Id::try_from(id).unwrap();
-        self.storage.remove(&id);
-        id.to_string()
+        self.storage.remove(&id)
+    }
+
+    /// Get release status
+    #[must_use]
+    pub fn get_status(&self, id: String) -> Option<IdStatus> {
+        let id = Id::try_from(id).unwrap();
+        self.storage.get_status(id)
+    }
+
+    /// Get blob data for specific release
+    #[must_use]
+    pub fn get_blob(&self, id: String) -> Option<Base64VecU8> {
+        let id = Id::try_from(id).unwrap();
+        let release_data = self.storage.get(&id)?;
+        Some(release_data.0.into())
     }
 
     /// Lists all releases.

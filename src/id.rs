@@ -1,5 +1,5 @@
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
-use near_sdk::serde::Serialize;
+use near_sdk::serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use std::convert::TryFrom;
 
 /// A checksum as bytes.
@@ -90,7 +90,7 @@ impl ToString for Version {
 }
 
 /// The Id of checksum data.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct Id {
     /// The version of the data.
     version: Version,
@@ -102,6 +102,18 @@ impl Id {
     #[must_use]
     pub const fn new(version: Version, checksum: Checksum) -> Self {
         Self { version, checksum }
+    }
+}
+
+impl Serialize for Id {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("Id", 2)?;
+        s.serialize_field("version", &self.version.to_string())?;
+        s.serialize_field("checksum", &self.checksum.to_string())?;
+        s.end()
     }
 }
 
@@ -149,13 +161,13 @@ impl ToString for Id {
     }
 }
 
-#[derive(Serialize, BorshSerialize, BorshDeserialize)]
+#[derive(Serialize, BorshSerialize, Eq, PartialEq, BorshDeserialize)]
 pub struct IdStatus {
     pub id: Id,
     pub status: Status,
 }
 
-#[derive(Serialize, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
 pub enum Status {
     Released,
     Yanked,
