@@ -1,5 +1,35 @@
+use aurora_release_repository::id::{Id, Status};
+use near_sdk::json_types::Base64VecU8;
+use near_sdk::serde::Deserialize;
+use near_sdk::ONE_YOCTO;
+use serde_json::json;
 use std::str::FromStr;
+use workspaces::result::ExecutionFinalResult;
 use workspaces::{AccountId, Contract};
+
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+pub struct CustomId {
+    pub version: String,
+    pub checksum: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
+pub struct CustomIdStatus {
+    pub id: CustomId,
+    pub status: Status,
+}
+
+impl CustomIdStatus {
+    pub fn new(id: Id, status: Option<Status>) -> Self {
+        Self {
+            id: CustomId {
+                version: id.version.to_string(),
+                checksum: id.checksum.to_string(),
+            },
+            status: status.unwrap_or(Status::Released),
+        }
+    }
+}
 
 pub struct TestContract {
     pub contract: Contract,
@@ -41,5 +71,71 @@ impl TestContract {
 
         let contract = worker.dev_deploy(&contract_data).await?;
         Ok(contract)
+    }
+
+    pub async fn push(
+        &self,
+        version: &str,
+        code: &Base64VecU8,
+        latest: bool,
+        // Terra Gas
+        tgas: u64,
+    ) -> anyhow::Result<ExecutionFinalResult> {
+        Ok(self
+            .contract
+            .call("push")
+            .args_json(json!({
+                "version": version,
+                "code": code,
+                "latest": latest
+            }))
+            .gas(tgas * 1_000_000_000_000)
+            .deposit(ONE_YOCTO)
+            .transact()
+            .await?)
+    }
+
+    pub async fn pull(&self, id: &Id) -> anyhow::Result<ExecutionFinalResult> {
+        let res = self
+            .contract
+            .call("pull")
+            .args_json(json!({
+                "id": id.to_string(),
+            }))
+            .gas(6_000_000_000_000)
+            .deposit(ONE_YOCTO)
+            .transact()
+            .await?;
+        Ok(res)
+    }
+
+    pub async fn get_blob(&self, id: &Id) -> anyhow::Result<Base64VecU8> {
+        Ok(self
+            .contract
+            .view("get_blob")
+            .args_json(json!({"id": id.to_string()}))
+            .await?
+            .json()?)
+    }
+
+    pub async fn get_latest(&self) -> anyhow::Result<CustomId> {
+        Ok(self.contract.view("latest").await.unwrap().json()?)
+    }
+
+    pub async fn get_status(&self, id: &Id) -> anyhow::Result<CustomIdStatus> {
+        Ok(self
+            .contract
+            .view("get_status")
+            .args_json(json!({"id": id.to_string()}))
+            .await?
+            .json()?)
+    }
+
+    pub async fn list(&self) -> anyhow::Result<Vec<CustomIdStatus>> {
+        Ok(self.contract.view("list").await.unwrap().json()?)
+    }
+
+    pub async fn yank_list(&self) -> anyhow::Result<Vec<CustomId>> {
+        Ok(self.contract.view("yank_list").await.unwrap().json()?)
     }
 }
