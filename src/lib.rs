@@ -39,6 +39,11 @@ impl State {
         env::predecessor_account_id() == self.owner_id
     }
 
+    #[must_use]
+    pub const fn get_owner(&self) -> &AccountId {
+        &self.owner_id
+    }
+
     /// Pushes a new release of the contract into the storage.
     #[payable]
     pub fn push(&mut self, version: String, code: Base64VecU8, latest: bool) -> String {

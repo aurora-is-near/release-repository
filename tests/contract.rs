@@ -2,6 +2,7 @@ use crate::utils::{CustomId, CustomIdStatus, TestContract};
 use aurora_release_repository::id::{Checksum, Id, Status, Version};
 use near_sdk::env::sha256;
 use near_sdk::json_types::Base64VecU8;
+use workspaces::AccountId;
 
 mod utils;
 
@@ -55,7 +56,6 @@ async fn test_pull() {
 
     let res = contract.push(version, &code, latest, 6).await.unwrap();
     assert!(res.is_success());
-
     let res = Id::try_from(res.into_result().unwrap().json::<String>().unwrap()).unwrap();
     assert_eq!(res, id);
 
@@ -236,4 +236,28 @@ async fn test_yank() {
     assert_eq!(res.status, Status::Yanked);
     assert_eq!(res.id.version, yank_id.version.to_string());
     assert_eq!(res.id.checksum, yank_id.checksum.to_string());
+}
+
+#[tokio::test]
+async fn test_owners() {
+    let contract = TestContract::new(None).await.unwrap();
+    let is_owner = contract
+        .contract
+        .call("is_owner")
+        .max_gas()
+        .transact()
+        .await
+        .unwrap()
+        .json::<bool>()
+        .unwrap();
+    assert!(is_owner);
+
+    let owner = contract
+        .contract
+        .view("get_owner")
+        .await
+        .unwrap()
+        .json::<AccountId>()
+        .unwrap();
+    assert_eq!(&owner, contract.contract.id());
 }
