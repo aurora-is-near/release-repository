@@ -1,4 +1,4 @@
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use std::convert::TryFrom;
 

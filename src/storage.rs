@@ -1,6 +1,6 @@
 use crate::id::IdStatus;
 use crate::{id, id::Id, ReleaseData};
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, Vector};
 use near_sdk::BorshStorageKey;
 
