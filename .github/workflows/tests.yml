@@ -20,6 +20,7 @@ jobs:
       - name: Install sandbox
         run: |
           mkdir -p bin
+          rm -rf nearcore
           git clone --depth 1 --branch 1.35.0 https://github.com/near/nearcore
           cd nearcore
           make sandbox-release
