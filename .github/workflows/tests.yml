@@ -6,10 +6,10 @@ on:
       - develop
   pull_request:
 
-name: Tests
+name: CI
 jobs:
-  test:
-    name: Test suite (mainnet)
+  ci:
+    name: CI
     runs-on: [self-hosted, heavy]
     steps:
       - name: Install rust
@@ -17,24 +17,44 @@ jobs:
           rustup show
           rustup default ${{ env.RUST_VERSION }}
 
+      - name: Clone the repository
+        uses: actions/checkout@v3
+
+      - name: Restore cache
+        run: |
+          cache-util restore cargo_git cargo_registry sandbox:${{ env.NEAR_SANDBOX_BIN_PATH }}
+
+      - name: Check fmt
+        run: cargo fmt -- --check
+      - name: Lint checker
+        run: cargo clippy --all-features -- -D warnings
+      - name: Lint checker for tests
+        run: cargo clippy --all-features --tests -- -D warnings
+
       - name: Install sandbox
         run: |
-          mkdir -p $HOME"/bin"
-          rm -rf nearcore
-          git clone --depth 1 --branch 1.35.0 https://github.com/near/nearcore
-          cd nearcore
-          make sandbox-release
-          cp target/release/near-sandbox $HOME"/bin/"
-          cd ../
+          if [[ ! -f ${{ env.NEAR_SANDBOX_BIN_PATH }} ]]; then
+            mkdir -p $HOME/bin
+            rm -rf nearcore
+            git clone --depth 1 --branch 1.35.0 https://github.com/near/nearcore
+            cd nearcore
+            make sandbox-release
+            cp target/release/near-sandbox $HOME/bin/
+            cache-util save sandbox:${{ env.NEAR_SANDBOX_BIN_PATH }}          
+            cd ../
+            rm -rf nearcore
+          fi 
 
-      - name: Clone the repository
-        uses: actions/checkout@v2
-      - name: Build test WASM
+      - name: Build contract
         run: cargo build --release --target wasm32-unknown-unknown
       - name: Test
-        run: NEAR_SANDBOX_BIN_PATH=$HOME"/bin/near-sandbox" cargo test --all
+        run: cargo test --all
+      - name: Save cache
+        run: |
+          cache-util save cargo_git cargo_registry
 
 env:
   RUST_VERSION: 1.72.0
+  NEAR_SANDBOX_BIN_PATH: $HOME/bin/near-sandbox
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
