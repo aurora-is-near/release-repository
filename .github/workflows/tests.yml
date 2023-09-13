@@ -48,7 +48,7 @@ jobs:
       - name: Build contract
         run: cargo build --release --target wasm32-unknown-unknown
       - name: Test
-        run: cargo test --all
+        run: NEAR_SANDBOX_BIN_PATH=${{ env.NEAR_SANDBOX_BIN_PATH }} cargo test --all
       - name: Save cache
         run: |
           cache-util save cargo_git cargo_registry
