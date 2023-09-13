@@ -12,6 +12,11 @@ jobs:
     name: Test suite (mainnet)
     runs-on: [self-hosted, heavy]
     steps:
+      - name: Install rust
+        run: |
+          rustup show
+          rustup default ${{ env.RUST_VERSION }}
+
       - name: Install sandbox
         run: |
           mkdir -p bin
@@ -20,6 +25,7 @@ jobs:
           make sandbox-release
           cp target/release/near-sandbox ~/bin/
           cd ~/
+
       - name: Clone the repository
         uses: actions/checkout@v2
       - name: Build test WASM
@@ -28,5 +34,6 @@ jobs:
         run: NEAR_SANDBOX_BIN_PATH=$HOME"/bin/near-sandbox" cargo test --all
 
 env:
+  RUST_VERSION: 1.72.0
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
