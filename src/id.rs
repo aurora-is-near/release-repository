@@ -28,7 +28,9 @@ impl TryFrom<String> for Version {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         // Split string value into parts, seperated by `.`
-        let Some(value) = value.strip_prefix('v') else { return Err(error::VersionError::UnusualVersion) };
+        let Some(value) = value.strip_prefix('v') else {
+            return Err(error::VersionError::UnusualVersion);
+        };
         let parts: Vec<&str> = value.split_terminator('.').collect();
         // Check to ensure we have 3 parts.
         if parts.len() != 3 {
@@ -58,7 +60,9 @@ impl TryFrom<&str> for Version {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         // Split string value into parts, seperated by `.`
-        let Some(value) = value.strip_prefix('v') else { return Err(error::VersionError::UnusualVersion) };
+        let Some(value) = value.strip_prefix('v') else {
+            return Err(error::VersionError::UnusualVersion);
+        };
         let parts: Vec<&str> = value.split_terminator('.').collect();
         // Check to ensure we have 3 parts.
         if parts.len() != 3 {
