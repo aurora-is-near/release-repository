@@ -2,7 +2,7 @@ use crate::utils::{CustomId, CustomIdStatus, TestContract};
 use aurora_release_repository::id::{Checksum, Id, Status, Version};
 use near_sdk::env::sha256;
 use near_sdk::json_types::Base64VecU8;
-use workspaces::AccountId;
+use near_workspaces::AccountId;
 
 mod utils;
 

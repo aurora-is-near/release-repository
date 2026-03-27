@@ -1,6 +1,6 @@
 use crate::id::IdStatus;
 use crate::{id, id::Id, ReleaseData};
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, Vector};
 use near_sdk::BorshStorageKey;
 
@@ -34,6 +34,7 @@ impl ReleaseStorage {
             status: id::Status::Released,
         };
         self.status_list.push(&id_status);
+
         if latest {
             self.latest = Some(id);
         }
@@ -42,24 +43,26 @@ impl ReleaseStorage {
     pub fn remove(&mut self, id: &Id) -> Option<IdStatus> {
         self.releases.remove(id);
 
-        let mut i = 0;
-        let mut found = false;
-        for id_status in self.status_list.iter() {
-            if id_status.id == id.clone() {
-                found = true;
-                break;
-            }
-            i += 1;
-        }
-        if !found {
-            return None;
-        }
+        let index = self
+            .status_list
+            .iter()
+            .enumerate()
+            .find_map(|(index, status)| {
+                if &status.id == id {
+                    u64::try_from(index).ok()
+                } else {
+                    None
+                }
+            })?;
+
         let id_status = IdStatus {
             id: id.clone(),
             status: id::Status::Yanked,
         };
-        self.status_list.replace(i, &id_status);
+
+        self.status_list.replace(index, &id_status);
         self.yanked_list.push(id);
+
         Some(id_status)
     }
 

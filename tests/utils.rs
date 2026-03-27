@@ -1,11 +1,13 @@
 use aurora_release_repository::id::{Id, Status};
 use near_sdk::json_types::Base64VecU8;
 use near_sdk::serde::Deserialize;
-use near_sdk::ONE_YOCTO;
-use serde_json::json;
+use near_sdk::serde_json::json;
+use near_workspaces::result::ExecutionFinalResult;
+use near_workspaces::types::{Gas, NearToken};
+use near_workspaces::{AccountId, Contract};
 use std::str::FromStr;
-use workspaces::result::ExecutionFinalResult;
-use workspaces::{AccountId, Contract};
+
+const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
 pub struct CustomId {
@@ -55,7 +57,7 @@ impl TestContract {
     }
 
     pub async fn deploy_contract() -> anyhow::Result<Contract> {
-        let worker = workspaces::sandbox()
+        let worker = near_workspaces::sandbox()
             .await
             .map_err(|err| anyhow::anyhow!("Failed init sandbox: {:?}", err))?;
 
@@ -89,7 +91,7 @@ impl TestContract {
                 "code": code,
                 "latest": latest
             }))
-            .gas(tgas * 1_000_000_000_000)
+            .gas(Gas::from_gas(tgas * 1_000_000_000_000))
             .deposit(ONE_YOCTO)
             .transact()
             .await?)
@@ -102,7 +104,7 @@ impl TestContract {
             .args_json(json!({
                 "id": id.to_string(),
             }))
-            .gas(6_000_000_000_000)
+            .gas(Gas::from_gas(6_000_000_000_000))
             .deposit(ONE_YOCTO)
             .transact()
             .await?;

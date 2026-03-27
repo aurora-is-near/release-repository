@@ -1,4 +1,4 @@
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use std::convert::TryFrom;
 
@@ -27,31 +27,7 @@ impl TryFrom<String> for Version {
     type Error = error::VersionError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        // Split string value into parts, seperated by `.`
-        let Some(value) = value.strip_prefix('v') else {
-            return Err(error::VersionError::UnusualVersion);
-        };
-        let parts: Vec<&str> = value.split_terminator('.').collect();
-        // Check to ensure we have 3 parts.
-        if parts.len() != 3 {
-            return Err(error::VersionError::UnusualVersion);
-        }
-
-        let major = parts[0]
-            .parse::<u32>()
-            .map_err(error::VersionError::ParseInt);
-        let minor = parts[1]
-            .parse::<u32>()
-            .map_err(error::VersionError::ParseInt);
-        let patch = parts[2]
-            .parse::<u32>()
-            .map_err(error::VersionError::ParseInt);
-
-        Ok(Self {
-            major: major?,
-            minor: minor?,
-            patch: patch?,
-        })
+        Self::try_from(value.as_str())
     }
 }
 
@@ -125,7 +101,7 @@ impl TryFrom<String> for Id {
     type Error = error::IdError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::try_from(&value[..])
+        Self::try_from(value.as_str())
     }
 }
 
@@ -140,16 +116,11 @@ impl TryFrom<&str> for Id {
             return Err(error::IdError::UnusualId);
         }
 
-        // Check to ensure that the first part starts with a 'v' for
-        // version.
-        if !parts[0].starts_with('v') {
-            return Err(error::IdError::MissingVPrefix);
-        }
-
         // Check to ensure that the 2nd part is exactly 64 bytes long.
         if parts[1].len() != 64 {
             return Err(error::IdError::HashLen);
         }
+
         let version = Version::try_from(parts[0])?;
         let checksum = Checksum(hex::decode(parts[1])?);
 
